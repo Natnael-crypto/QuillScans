@@ -1,0 +1,79 @@
+{
+    "invoice_number": "RE-2050-001",
+    "invoice_date": "2050-11-05",
+    "due_date": "2050-11-20",
+    "po_number": null,
+    "currency": "USD",
+    "vendor": {
+        "name": "Real Estate",
+        "address": "Cincinnati, OH 45201",
+        "email": "inquire@grandeco.mail",
+        "phone": "222 555 7777",
+        "tax_id": null,
+        "registration_number": null,
+        "website": "www.Template.net"
+    },
+    "customer": {
+        "name": "Rohan",
+        "address": "Jersey City, NJ 07302",
+        "email": null,
+        "phone": "222 555 7777",
+        "tax_id": null
+    },
+    "line_items": [
+        {
+            "description": "Rent for Property at Fort Wayne, IN 46801",
+            "quantity": null,
+            "unit_price": null,
+            "total_price": 2000.0,
+            "sku": null
+        },
+        {
+            "description": "Property Maintenance Service",
+            "quantity": null,
+            "unit_price": null,
+            "total_price": 350.0,
+            "sku": null
+        },
+        {
+            "description": "Real Estate Agent Commission",
+            "quantity": null,
+            "unit_price": null,
+            "total_price": 500.0,
+            "sku": null
+        },
+        {
+            "description": "Inspection Fee",
+            "quantity": null,
+            "unit_price": null,
+            "total_price": 200.0,
+            "sku": null
+        }
+    ],
+    "summary": {
+        "subtotal": null,
+        "discount": null,
+        "tax_amount": null,
+        "tax_rate": null,
+        "shipping_fee": null,
+        "other_fees": null,
+        "total": 3050.0,
+        "currency": "USD"
+    },
+    "payment_details": {
+        "payment_method": "Bank Account",
+        "paid_status": null,
+        "paid_date": null,
+        "bank_account": "PentaCorp Bank",
+        "iban": null,
+        "swift": null,
+        "payment_reference": "123456789"
+    },
+    "additional_info": {
+        "terms": null,
+        "notes": "Please make the payment to the following bank account:\nRouting Number: 987654321",
+        "barcode_data": null,
+        "qr_data": null,
+        "page_number": null
+    }
+}
