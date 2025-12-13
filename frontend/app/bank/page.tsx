@@ -9,11 +9,14 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BankStatement } from '@/types/document';
 
+import { FilterValue } from '@/components/Filters';
+
 interface BankFilters {
     search?: string;
     status?: string;
     dateFrom?: string;
     dateTo?: string;
+    [key: string]: FilterValue;
 }
 
 const mockStatements: BankStatement[] = [

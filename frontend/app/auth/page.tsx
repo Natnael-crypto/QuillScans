@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Zap, Mail, Lock, Eye, EyeOff, ArrowRight, User, Building2 } from 'lucide-react';
 import { motion } from "framer-motion";
 import Link from 'next/link';
@@ -8,9 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 
-export default function Auth() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialMode = urlParams.get('mode') || 'login';
+function AuthContent() {
+    const searchParams = useSearchParams();
+    const initialMode = searchParams.get('mode') || 'login';
 
     const [mode, setMode] = useState(initialMode);
     const [showPassword, setShowPassword] = useState(false);
@@ -311,5 +312,13 @@ export default function Auth() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function Auth() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <AuthContent />
+        </Suspense>
     );
 }

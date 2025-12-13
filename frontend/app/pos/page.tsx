@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { Plus, FileSpreadsheet } from 'lucide-react';
 import DocumentTable from '@/components/DocumentTable';
-import Filters from '@/components/Filters';
+import Filters, { FilterValue } from '@/components/Filters';
 import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PurchaseOrder } from '@/types/document';
 
 interface POFilters {
+    [key: string]: FilterValue;
     search?: string;
     status?: string;
     dateFrom?: string;

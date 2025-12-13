@@ -9,11 +9,14 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Invoice, AnyDocument } from '@/types/document';
 
+import { FilterValue } from '@/components/Filters';
+
 interface InvoiceFilters {
     search?: string;
     status?: string;
     dateFrom?: string;
     dateTo?: string;
+    [key: string]: FilterValue;
 }
 
 // Mock data

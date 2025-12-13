@@ -196,7 +196,7 @@ export default function ExtractedDataPanel({
                             {isEditing ? (
                                 <input
                                     type={type === 'date' ? 'date' : type === 'currency' ? 'number' : 'text'}
-                                    value={currentData?.[key] || ''}
+                                    value={(currentData?.[key] as string | number) || ''}
                                     onChange={(e) => handleFieldChange(key, e.target.value)}
                                     className="w-full h-10 px-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
                                     step={type === 'currency' ? '0.01' : undefined}
@@ -204,10 +204,10 @@ export default function ExtractedDataPanel({
                             ) : (
                                 <p className="text-sm font-medium text-slate-900">
                                     {type === 'currency'
-                                        ? formatCurrency(currentData?.[key])
+                                        ? formatCurrency(currentData?.[key] as number)
                                         : type === 'date'
-                                            ? currentData?.[key] ? new Date(currentData[key]).toLocaleDateString() : '-'
-                                            : currentData?.[key] || '-'
+                                            ? currentData?.[key] ? new Date(currentData[key] as string).toLocaleDateString() : '-'
+                                            : (currentData?.[key] as string | number) || '-'
                                     }
                                 </p>
                             )}

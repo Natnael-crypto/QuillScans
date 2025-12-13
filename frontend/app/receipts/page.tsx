@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DocumentTable from '@/components/DocumentTable';
-import Filters from '@/components/Filters';
+import Filters, { FilterValue } from '@/components/Filters';
 import Pagination from '@/components/Pagination';
 import { Receipt, AnyDocument } from '@/types/document';
 
@@ -14,6 +14,7 @@ interface ReceiptFilters {
     status?: string;
     dateFrom?: string;
     dateTo?: string;
+    [key: string]: FilterValue;
 }
 
 // Mock data
