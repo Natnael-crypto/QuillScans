@@ -77,7 +77,7 @@ function AuthContent() {
 
                         <span className={cn(
                             "text-xl font-bold transition-colors",
-                            "text-white"
+                            "text-black"
                         )}>
                             QuillScans
                         </span>
