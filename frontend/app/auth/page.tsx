@@ -162,7 +162,7 @@ function AuthContent() {
                         />
 
                         <div className="relative">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password" className='mb-2'>Password</Label>
                             <Input
                                 id="password"
                                 type={showPassword ? 'text' : 'password'}
