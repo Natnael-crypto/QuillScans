@@ -175,7 +175,7 @@ function AuthContent() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-9 text-slate-400 hover:text-slate-600"
+                                className="absolute right-3 top-6 text-slate-400 hover:text-slate-600"
                             >
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
