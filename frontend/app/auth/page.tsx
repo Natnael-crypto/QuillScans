@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 function AuthContent() {
     const searchParams = useSearchParams();
@@ -65,11 +66,21 @@ function AuthContent() {
                     className="w-full max-w-md"
                 >
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 mb-8">
-                        <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center">
-                            <Zap className="h-6 w-6 text-accent" />
-                        </div>
-                        <span className="text-2xl font-bold text-slate-900">DocuFlow</span>
+                    <Link href="/" className="flex items-center gap-2">
+
+                        <img
+                            src="/logo.png"
+                            alt="Logo"
+                            width={30}
+                            height={30}
+                        ></img>
+
+                        <span className={cn(
+                            "text-xl font-bold transition-colors",
+                            "text-white"
+                        )}>
+                            QuillScans
+                        </span>
                     </Link>
 
                     <h1 className="text-3xl font-bold text-slate-900 mb-2">
