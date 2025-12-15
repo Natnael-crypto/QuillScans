@@ -5,6 +5,7 @@ import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
 import Pricing from "@/components/landing/Pricing";
 import Footer from "@/components/landing/Footer";
+import { Providers } from "./providers";
 
 export default function Home() {
   return (

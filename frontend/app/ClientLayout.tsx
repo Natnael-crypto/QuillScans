@@ -30,8 +30,7 @@ export default function ClientLayout({
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-    // Dummy user for now
-    const user = { full_name: "Demo User", email: "demo@example.com" };
+
 
     if (isPublicPage) {
         return <>{children}</>;
@@ -49,7 +48,6 @@ export default function ClientLayout({
             {/* Main Content */}
             <div className={`transition-all duration-300 ${isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
                 <Navbar
-                    user={user}
                     currentPage={currentPageName}
                 />
                 <main className="pt-16">

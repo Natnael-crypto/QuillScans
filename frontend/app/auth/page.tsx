@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { signInWithGoogle } from '@/lib/auth/google';
+import { useRegister } from '@/hooks/useRegister';
+import { useLogin } from '@/hooks/useLogin';
 
 function AuthContent() {
     const searchParams = useSearchParams();
@@ -25,6 +28,9 @@ function AuthContent() {
         password: ''
     });
 
+    const loginMutation = useLogin();
+    const registerMutation = useRegister();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -32,14 +38,23 @@ function AuthContent() {
 
         try {
             if (mode === 'signup') {
-                // Create user account
-                console.log(formData);
+                await registerMutation.mutateAsync({
+                    email: formData.email,
+                    password: formData.password,
+                    full_name: formData.fullName,
+                    company: formData.company
+                });
+            } else {
+                await loginMutation.mutateAsync({
+                    email: formData.email,
+                    password: formData.password
+                });
             }
 
             // Redirect to dashboard
             window.location.href = '/dashboard';
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
+        } catch (err: any) {
+            setError(err.response?.data?.message || err.message || 'An error occurred');
         } finally {
             setIsLoading(false);
         }
@@ -102,7 +117,7 @@ function AuthContent() {
 
                     {/* Google Auth */}
                     <button
-                        onClick={handleGoogleAuth}
+                        onClick={signInWithGoogle}
                         disabled={isLoading}
                         className="w-full flex items-center justify-center gap-3 h-12 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition-colors mb-6 disabled:opacity-50"
                     >

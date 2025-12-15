@@ -24,17 +24,17 @@ import {
     LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useMe } from "@/hooks/useMe";
 
 // Mock user type if needed
 interface NavbarProps {
-    user?: {
-        full_name?: string;
-        email?: string;
-    };
     currentPage: string;
 }
 
-export default function Navbar({ user, currentPage }: NavbarProps) {
+export default function Navbar({ currentPage }: NavbarProps) {
+    const { data: userResponse, isLoading } = useMe();
+    const user = userResponse?.profile || userResponse?.user;
+
     const [showUserMenu, setShowUserMenu] = React.useState(false);
     const [showNotifications, setShowNotifications] = React.useState(false);
     const [showMobileMenu, setShowMobileMenu] = React.useState(false);
@@ -203,10 +203,10 @@ export default function Navbar({ user, currentPage }: NavbarProps) {
                             className="flex items-center gap-2 p-1.5 pr-3 hover:bg-slate-100 rounded-xl transition-colors"
                         >
                             <div className="h-8 w-8 bg-gradient-to-br from-[#635BFF] to-[#635BFF] rounded-lg flex items-center justify-center text-white text-sm font-semibold">
-                                {user?.full_name?.charAt(0) || 'U'}
+                                {('full_name' in (user || {}) ? (user as any).full_name?.charAt(0) : user?.email?.charAt(0)) || 'U'}
                             </div>
                             <span className="hidden md:block text-sm font-medium text-slate-700">
-                                {user?.full_name || 'User'}
+                                {('full_name' in (user || {}) ? (user as any).full_name : null) || 'User'}
                             </span>
                             <ChevronDown className="h-4 w-4 text-slate-400" />
                         </button>
@@ -216,7 +216,7 @@ export default function Navbar({ user, currentPage }: NavbarProps) {
                                 <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
                                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden z-20">
                                     <div className="px-4 py-3 border-b border-slate-100">
-                                        <p className="text-sm font-medium text-slate-900">{user?.full_name || 'User'}</p>
+                                        <p className="text-sm font-medium text-slate-900">{('full_name' in (user || {}) ? (user as any).full_name : null) || 'User'}</p>
                                         <p className="text-sm text-slate-500">{user?.email || 'user@example.com'}</p>
                                     </div>
                                     <div className="py-2">
