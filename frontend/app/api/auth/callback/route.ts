@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
     console.log(session);
 
-    setAuthCookies(
+    await setAuthCookies(
         session.access_token,
         session.refresh_token,
         session.expires_in

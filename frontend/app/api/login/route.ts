@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
     const { session } = data;
 
-    setAuthCookies(
+    await setAuthCookies(
         session.access_token,
         session.refresh_token,
         session.expires_in
