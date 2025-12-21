@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DocumentTable from '@/components/DocumentTable';
 import Filters, { FilterValue } from '@/components/Filters';
 import Pagination from '@/components/Pagination';
-import { Receipt, AnyDocument } from '@/types/document';
+import { Receipt as UiReceipt, AnyDocument } from '@/types/document';
+import { Receipt as ApiReceipt } from '@/types/receipt';
+import axios from '@/lib/axios';
 
 interface ReceiptFilters {
     search?: string;
@@ -17,23 +19,60 @@ interface ReceiptFilters {
     [key: string]: FilterValue;
 }
 
-// Mock data
-const mockReceipts: Receipt[] = [
-    { id: '1', date: '2024-01-15', vendor: 'Staples', documentNumber: 'RCP-001', amount: 156.99, currency: 'USD', status: 'processed' },
-    { id: '2', date: '2024-01-14', vendor: 'Delta Airlines', documentNumber: 'RCP-002', amount: 425.50, currency: 'USD', status: 'processed' },
-    { id: '3', date: '2024-01-13', vendor: 'Uber', documentNumber: 'RCP-003', amount: 32.40, currency: 'USD', status: 'processed' },
-    { id: '4', date: '2024-01-12', vendor: 'Amazon AWS', documentNumber: 'RCP-004', amount: 892.00, currency: 'USD', status: 'processing' },
-    { id: '5', date: '2024-01-11', vendor: 'WeWork', documentNumber: 'RCP-005', amount: 1200.00, currency: 'USD', status: 'processed' },
-    { id: '6', date: '2024-01-10', vendor: 'Zoom', documentNumber: 'RCP-006', amount: 149.90, currency: 'USD', status: 'processed' },
-    { id: '7', date: '2024-01-09', vendor: 'FedEx', documentNumber: 'RCP-007', amount: 78.50, currency: 'USD', status: 'pending' },
-];
-
 export default function Receipts() {
     const [filters, setFilters] = useState<ReceiptFilters>({});
-    const [sortField, setSortField] = useState('date');
+    const [sortField, setSortField] = useState('created_at');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [currentPage, setCurrentPage] = useState(1);
+    const [receipts, setReceipts] = useState<UiReceipt[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [totalCount, setTotalCount] = useState(0);
     const itemsPerPage = 10;
+
+    const fetchReceipts = useCallback(async () => {
+        setLoading(true);
+        try {
+            const params: Record<string, string | number> = {
+                page: currentPage,
+                limit: itemsPerPage,
+                sortField,
+                sortDirection,
+            };
+
+            if (filters.search) params.receiptNumber = filters.search;
+            if (filters.status && filters.status !== 'all') params.status = filters.status;
+            if (filters.dateFrom) params.transactionDateFrom = filters.dateFrom;
+            if (filters.dateTo) params.transactionDateTo = filters.dateTo;
+
+            const response = await axios.get('/api/receipts', { params });
+
+            const apiReceipts: ApiReceipt[] = response.data.data;
+            const meta = response.data.meta;
+
+            // Map ApiReceipt to UiReceipt (AnyDocument compatible)
+            const mappedReceipts: UiReceipt[] = apiReceipts.map(rec => ({
+                id: rec.id,
+                date: (typeof rec.transactionDate === 'string' ? rec.transactionDate : rec.transactionDate.toISOString()),
+                amount: rec.grandTotal,
+                currency: rec.currency,
+                status: rec.status as UiReceipt['status'],
+                documentNumber: rec.receiptNumber,
+                vendor: rec.merchant?.name || 'Unknown',
+            }));
+
+            setReceipts(mappedReceipts);
+            setTotalCount(meta.total);
+
+        } catch (error) {
+            console.error("Failed to fetch receipts", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [currentPage, filters, sortField, sortDirection]);
+
+    useEffect(() => {
+        fetchReceipts();
+    }, [fetchReceipts]);
 
     const handleSort = (field: string, direction: 'asc' | 'desc') => {
         setSortField(field);
@@ -48,42 +87,6 @@ export default function Receipts() {
     const handleDownload = (doc: AnyDocument) => console.log('Download:', doc);
     const handleRegenerate = (doc: AnyDocument) => console.log('Regenerate:', doc);
     const handleDelete = (doc: AnyDocument) => console.log('Delete:', doc);
-
-    let filteredData = [...mockReceipts];
-
-    if (filters.search) {
-        const search = filters.search.toLowerCase();
-        filteredData = filteredData.filter(d =>
-            d.vendor?.toLowerCase().includes(search) ||
-            d.documentNumber?.toLowerCase().includes(search)
-        );
-    }
-
-    if (filters.status) {
-        filteredData = filteredData.filter(d => d.status === filters.status);
-    }
-
-    filteredData.sort((a, b) => {
-        let aVal = a[sortField as keyof Receipt];
-        let bVal = b[sortField as keyof Receipt];
-
-        if (sortField === 'date') {
-            aVal = new Date(aVal as string).getTime();
-            bVal = new Date(bVal as string).getTime();
-        }
-
-        if (aVal === undefined) return 1;
-        if (bVal === undefined) return -1;
-
-        if (sortDirection === 'asc') return aVal > bVal ? 1 : -1;
-        return aVal < bVal ? 1 : -1;
-    });
-
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-    const paginatedData = filteredData.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
 
     return (
         <div className="space-y-6">
@@ -109,7 +112,7 @@ export default function Receipts() {
             <Filters onFilterChange={handleFilterChange} filters={filters} />
 
             <DocumentTable
-                documents={paginatedData}
+                documents={receipts}
                 type="receipt"
                 sortField={sortField}
                 sortDirection={sortDirection}
@@ -117,13 +120,14 @@ export default function Receipts() {
                 onDownload={handleDownload}
                 onRegenerate={handleRegenerate}
                 onDelete={handleDelete}
+                isLoading={loading}
             />
 
-            {filteredData.length > itemsPerPage && (
+            {totalCount > itemsPerPage && (
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={filteredData.length}
+                    totalPages={Math.ceil(totalCount / itemsPerPage)}
+                    totalItems={totalCount}
                     itemsPerPage={itemsPerPage}
                     onPageChange={setCurrentPage}
                 />

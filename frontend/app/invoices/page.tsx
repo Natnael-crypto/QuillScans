@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, FileSpreadsheet } from 'lucide-react';
 import DocumentTable from '@/components/DocumentTable';
 import Filters from '@/components/Filters';
 import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Invoice, AnyDocument } from '@/types/document';
-
+import { Invoice as UiInvoice, AnyDocument } from '@/types/document';
+import { Invoice as ApiInvoice } from '@/types/invoice'; // Alias specifically for API response
 import { FilterValue } from '@/components/Filters';
+import axios from '@/lib/axios';
 
 interface InvoiceFilters {
     search?: string;
@@ -19,24 +20,62 @@ interface InvoiceFilters {
     [key: string]: FilterValue;
 }
 
-// Mock data
-const mockInvoices: Invoice[] = [
-    { id: '1', date: '2024-01-15', customer: 'Acme Corporation', documentNumber: 'INV-2024-001', amount: 2450.00, currency: 'USD', status: 'processed' },
-    { id: '2', date: '2024-01-14', customer: 'Tech Solutions Inc', documentNumber: 'INV-2024-002', amount: 8900.00, currency: 'USD', status: 'processed' },
-    { id: '3', date: '2024-01-13', customer: 'Global Enterprises', documentNumber: 'INV-2024-003', amount: 1250.50, currency: 'USD', status: 'processing' },
-    { id: '4', date: '2024-01-12', customer: 'StartUp Labs', documentNumber: 'INV-2024-004', amount: 5600.00, currency: 'USD', status: 'pending' },
-    { id: '5', date: '2024-01-11', customer: 'Digital Agency', documentNumber: 'INV-2024-005', amount: 3200.00, currency: 'USD', status: 'processed' },
-    { id: '6', date: '2024-01-10', customer: 'Cloud Services Co', documentNumber: 'INV-2024-006', amount: 15800.00, currency: 'USD', status: 'processed' },
-    { id: '7', date: '2024-01-09', customer: 'Marketing Pro', documentNumber: 'INV-2024-007', amount: 780.00, currency: 'USD', status: 'failed' },
-    { id: '8', date: '2024-01-08', customer: 'Design Studio', documentNumber: 'INV-2024-008', amount: 4500.00, currency: 'USD', status: 'processed' },
-];
-
 export default function Invoices() {
     const [filters, setFilters] = useState<InvoiceFilters>({});
-    const [sortField, setSortField] = useState('date');
+    const [sortField, setSortField] = useState('created_at');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [currentPage, setCurrentPage] = useState(1);
+    const [invoices, setInvoices] = useState<UiInvoice[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [totalCount, setTotalCount] = useState(0);
     const itemsPerPage = 10;
+
+    const fetchInvoices = useCallback(async () => {
+        setLoading(true);
+        try {
+            const params: Record<string, string | number> = {
+                page: currentPage,
+                limit: itemsPerPage,
+                sortField,
+                sortDirection,
+            };
+
+            if (filters.search) params.invoiceNumber = filters.search;
+            if (filters.status && filters.status !== 'all') params.status = filters.status;
+            if (filters.dateFrom) params.issuedAtFrom = filters.dateFrom;
+            if (filters.dateTo) params.issuedAtTo = filters.dateTo;
+
+            const response = await axios.get('/api/invoices', { params });
+
+            const apiInvoices: ApiInvoice[] = response.data.data;
+            const meta = response.data.meta;
+
+            // Map ApiInvoice to UiInvoice (AnyDocument compatible)
+            const mappedInvoices: UiInvoice[] = apiInvoices.map(inv => ({
+                id: inv.id,
+                date: (typeof inv.issuedAt === 'string' ? inv.issuedAt : inv.issuedAt.toISOString()),
+                // Use grandTotal for amount. If null (shouldn't be for valid invoice), default 0
+                amount: inv.totals?.grandTotal ?? 0,
+                currency: inv.totals?.currency ?? 'USD',
+                status: inv.status as UiInvoice['status'],
+                documentNumber: inv.invoiceNumber,
+                customer: inv.recipient?.name || 'Unknown', // Showing recipient as customer for outgoing invoices
+                dueDate: (typeof inv.dueDate === 'string' ? inv.dueDate : inv.dueDate?.toISOString()),
+            }));
+
+            setInvoices(mappedInvoices);
+            setTotalCount(meta.total);
+
+        } catch (error) {
+            console.error("Failed to fetch invoices", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [currentPage, filters, sortField, sortDirection]);
+
+    useEffect(() => {
+        fetchInvoices();
+    }, [fetchInvoices]);
 
     const handleSort = (field: string, direction: 'asc' | 'desc') => {
         setSortField(field);
@@ -50,7 +89,6 @@ export default function Invoices() {
 
     const handleDownload = (doc: AnyDocument) => {
         console.log('Download:', doc);
-        // In real app, this would call the export API
     };
 
     const handleRegenerate = (doc: AnyDocument) => {
@@ -58,54 +96,13 @@ export default function Invoices() {
     };
 
     const handleDelete = (doc: AnyDocument) => {
-        console.log('Delete:', doc);
+        // Implement delete call
+        console.log('Delete not implemented yet for', doc.id);
     };
 
     const handleExportAll = () => {
         console.log('Export all invoices');
     };
-
-    // Filter and sort data
-    let filteredData = [...mockInvoices];
-
-    if (filters.search) {
-        const search = filters.search.toLowerCase();
-        filteredData = filteredData.filter(d =>
-            d.customer?.toLowerCase().includes(search) ||
-            d.documentNumber?.toLowerCase().includes(search)
-        );
-    }
-
-    if (filters.status) {
-        filteredData = filteredData.filter(d => d.status === filters.status);
-    }
-
-    // Sort
-    filteredData.sort((a, b) => {
-        let aVal = a[sortField as keyof Invoice];
-        let bVal = b[sortField as keyof Invoice];
-
-        if (sortField === 'date') {
-            aVal = new Date(aVal as string).getTime();
-            bVal = new Date(bVal as string).getTime();
-        }
-
-        // Handle undefined just in case
-        if (aVal === undefined) return 1;
-        if (bVal === undefined) return -1;
-
-        if (sortDirection === 'asc') {
-            return aVal > bVal ? 1 : -1;
-        }
-        return aVal < bVal ? 1 : -1;
-    });
-
-    // Paginate
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-    const paginatedData = filteredData.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
 
     return (
         <div className="space-y-6">
@@ -141,7 +138,7 @@ export default function Invoices() {
 
             {/* Table */}
             <DocumentTable
-                documents={paginatedData}
+                documents={invoices}
                 type="invoice"
                 sortField={sortField}
                 sortDirection={sortDirection}
@@ -149,14 +146,15 @@ export default function Invoices() {
                 onDownload={handleDownload}
                 onRegenerate={handleRegenerate}
                 onDelete={handleDelete}
+                isLoading={loading}
             />
 
             {/* Pagination */}
-            {filteredData.length > itemsPerPage && (
+            {totalCount > itemsPerPage && (
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={filteredData.length}
+                    totalPages={Math.ceil(totalCount / itemsPerPage)}
+                    totalItems={totalCount}
                     itemsPerPage={itemsPerPage}
                     onPageChange={setCurrentPage}
                 />

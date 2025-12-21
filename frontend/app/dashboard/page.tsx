@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
     FileText,
@@ -8,7 +9,9 @@ import {
     Clock,
     Upload,
     ArrowRight,
-    Plus
+    Plus,
+    Loader2,
+    LucideIcon
 } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
@@ -16,68 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import ChartLine from '@/components/charts/ChartLine';
 import ChartPie from '@/components/charts/ChartPie';
-import { motion } from 'framer-motion';
-
-// Mock data
-const stats = [
-    {
-        title: 'Total Documents',
-        value: '1,247',
-        change: '+12.5%',
-        changeType: 'increase' as const,
-        icon: FileText,
-        iconColor: 'bg-blue-100 text-blue-600'
-    },
-    {
-        title: 'Monthly Quota',
-        value: '142/200',
-        change: '58 remaining',
-        changeType: 'increase' as const,
-        icon: Clock,
-        iconColor: 'bg-purple-100 text-purple-600'
-    },
-    {
-        title: 'Total Invoices',
-        value: '$45,231',
-        change: '+8.2%',
-        changeType: 'increase' as const,
-        icon: Receipt,
-        iconColor: 'bg-emerald-100 text-emerald-600'
-    },
-    {
-        title: 'Total Expenses',
-        value: '$12,847',
-        change: '-3.1%',
-        changeType: 'decrease' as const,
-        icon: TrendingUp,
-        iconColor: 'bg-orange-100 text-orange-600'
-    },
-];
-
-const monthlyData = [
-    { name: 'Jan', value: 65 },
-    { name: 'Feb', value: 78 },
-    { name: 'Mar', value: 92 },
-    { name: 'Apr', value: 85 },
-    { name: 'May', value: 110 },
-    { name: 'Jun', value: 125 },
-    { name: 'Jul', value: 142 },
-];
-
-const documentTypes = [
-    { name: 'Invoices', value: 45 },
-    { name: 'Receipts', value: 30 },
-    { name: 'Bank Statements', value: 15 },
-    { name: 'Purchase Orders', value: 10 },
-];
-
-const recentDocuments = [
-    { id: 1, name: 'Invoice #INV-2024-001', vendor: 'Acme Corp', amount: 2450.00, status: 'processed', date: '2024-01-15' },
-    { id: 2, name: 'Receipt - Office Supplies', vendor: 'Staples', amount: 156.99, status: 'processed', date: '2024-01-14' },
-    { id: 3, name: 'Bank Statement - Dec 2023', vendor: 'Chase Bank', amount: 0, status: 'processing', date: '2024-01-13' },
-    { id: 4, name: 'Invoice #INV-2024-002', vendor: 'Tech Solutions', amount: 8900.00, status: 'pending', date: '2024-01-12' },
-    { id: 5, name: 'Receipt - Travel Expense', vendor: 'Delta Airlines', amount: 425.50, status: 'processed', date: '2024-01-11' },
-];
+import { motion, AnimatePresence } from 'framer-motion';
 
 const statusConfig: Record<string, { label: string, variant: "default" | "secondary" | "destructive" | "outline", className?: string }> = {
     processed: { label: 'Processed', variant: 'secondary', className: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80 border-transparent' },
@@ -87,12 +29,75 @@ const statusConfig: Record<string, { label: string, variant: "default" | "second
 };
 
 export default function Dashboard() {
+    const [stats, setStats] = useState<{ title: string; value: string; change: string; changeType: 'increase' | 'decrease'; icon: LucideIcon; iconColor: string }[]>([]);
+    const [monthlyData, setMonthlyData] = useState<{ name: string; value: number }[]>([]);
+    const [documentTypes, setDocumentTypes] = useState<{ name: string; value: number }[]>([]);
+    const [recentDocuments, setRecentDocuments] = useState<{ id: string; displayId: string; type: string; amount: number; status: string; date: string }[]>([]);
+    const [loading, setLoading] = useState(true);
+
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
         }).format(amount);
     };
+
+    useEffect(() => {
+        async function fetchDashboardData() {
+            setLoading(true);
+            try {
+                const [statsRes, usageRes, recentRes] = await Promise.all([
+                    fetch('/api/dashboard/stats'),
+                    fetch('/api/usage'),
+                    fetch('/api/documents/recent')
+                ]);
+
+                const statsData = await statsRes.json();
+                const usageData = await usageRes.json();
+                const recentData = await recentRes.json();
+
+                // Format Stats
+                setStats([
+                    {
+                        title: 'Total Documents',
+                        value: statsData.totalDocs?.toLocaleString() || '0',
+                        change: '',
+                        changeType: 'increase' as const,
+                        icon: FileText,
+                        iconColor: 'bg-blue-100 text-blue-600'
+                    },
+                    {
+                        title: 'Monthly Quota',
+                        value: `${usageData.quotaUsed || 0}/${usageData.quotaLimit || 200}`,
+                        change: `${usageData.remainingDays || 0} days left`,
+                        changeType: 'increase' as const,
+                        icon: Clock,
+                        iconColor: 'bg-purple-100 text-purple-600'
+                    }
+                ]);
+
+                setMonthlyData(statsData.monthlyTrend || []);
+                setDocumentTypes(statsData.documentTypes || []);
+                setRecentDocuments(recentData.data || []);
+
+            } catch (error) {
+                console.error("Failed to fetch dashboard data:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchDashboardData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-slate-500 animate-pulse">Loading dashboard summary...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 md:space-y-8">
@@ -112,45 +117,60 @@ export default function Dashboard() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                {stats.map((stat, index) => (
-                    <motion.div
-                        key={stat.title}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                    >
-                        <StatCard {...stat} />
-                    </motion.div>
-                ))}
+                <AnimatePresence>
+                    {stats.map((stat, index) => (
+                        <motion.div
+                            key={stat.title}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ delay: index * 0.1 }}
+                        >
+                            <StatCard {...stat} />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
             </div>
 
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 {/* Monthly Trend */}
-                <Card>
+                <Card className="overflow-hidden">
                     <CardHeader>
                         <CardTitle>Monthly Documents</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ChartLine
-                            data={monthlyData}
-                            height={280}
-                            color="#635BFF"
-                            gradientColor="#818CF8"
-                        />
+                        {monthlyData.length > 0 ? (
+                            <ChartLine
+                                data={monthlyData}
+                                height={280}
+                                color="#635BFF"
+                                gradientColor="#818CF8"
+                            />
+                        ) : (
+                            <div className="h-[280px] flex items-center justify-center text-slate-400">
+                                No data available for this period
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
                 {/* Document Distribution */}
-                <Card>
+                <Card className="overflow-hidden">
                     <CardHeader>
                         <CardTitle>Document Types</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ChartPie
-                            data={documentTypes}
-                            height={280}
-                        />
+                        {documentTypes.length > 0 ? (
+                            <ChartPie
+                                data={documentTypes}
+                                height={280}
+                            />
+                        ) : (
+                            <div className="h-[280px] flex items-center justify-center text-slate-400">
+                                No documents yet
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -168,95 +188,111 @@ export default function Dashboard() {
                     </Link>
                 </CardHeader>
                 <CardContent className="p-0">
-                    {/* Desktop Table */}
-                    <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-slate-100">
-                                    <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                        Document
-                                    </th>
-                                    <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">
-                                        Vendor
-                                    </th>
-                                    <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                        Amount
-                                    </th>
-                                    <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">
-                                        Date
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
+                    {recentDocuments.length > 0 ? (
+                        <>
+                            {/* Desktop Table */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-slate-100">
+                                            <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                Document
+                                            </th>
+                                            <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">
+                                                Type
+                                            </th>
+                                            <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                Amount
+                                            </th>
+                                            <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                                Status
+                                            </th>
+                                            <th className="text-left px-3 md:px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">
+                                                Date
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {recentDocuments.map((doc) => {
+                                            const status = statusConfig[doc.status as keyof typeof statusConfig] || statusConfig.pending;
+                                            return (
+                                                <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm font-medium text-slate-900">{doc.displayId}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <Badge variant="outline" className="capitalize">
+                                                            {doc.type}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm font-medium text-slate-900">
+                                                            {doc.amount > 0 ? formatCurrency(doc.amount) : '-'}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <Badge variant={status.variant} className={status.className}>
+                                                            {status.label}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <p className="text-sm text-slate-500">
+                                                            {new Date(doc.date).toLocaleDateString('en-US', {
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                year: 'numeric'
+                                                            })}
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Mobile Card View */}
+                            <div className="md:hidden divide-y divide-slate-100">
                                 {recentDocuments.map((doc) => {
-                                    const status = statusConfig[doc.status as keyof typeof statusConfig];
+                                    const status = statusConfig[doc.status as keyof typeof statusConfig] || statusConfig.pending;
                                     return (
-                                        <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <p className="text-sm font-medium text-slate-900">{doc.name}</p>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <p className="text-sm text-slate-600">{doc.vendor}</p>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <p className="text-sm font-medium text-slate-900">
-                                                    {doc.amount > 0 ? formatCurrency(doc.amount) : '-'}
-                                                </p>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <Badge variant={status.variant} className={status.className}>
+                                        <div key={doc.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-slate-900 truncate">{doc.displayId}</p>
+                                                    <Badge variant="outline" className="mt-1 text-[10px] h-4 capitalize">
+                                                        {doc.type}
+                                                    </Badge>
+                                                </div>
+                                                <Badge variant={status.variant} className={`ml-2 ${status.className || ''}`}>
                                                     {status.label}
                                                 </Badge>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <p className="text-sm text-slate-500">
+                                            </div>
+                                            <div className="flex items-center justify-between mt-3">
+                                                <span className="text-sm font-medium text-slate-900">
+                                                    {doc.amount > 0 ? formatCurrency(doc.amount) : '-'}
+                                                </span>
+                                                <span className="text-xs text-slate-500">
                                                     {new Date(doc.date).toLocaleDateString('en-US', {
                                                         month: 'short',
-                                                        day: 'numeric',
-                                                        year: 'numeric'
+                                                        day: 'numeric'
                                                     })}
-                                                </p>
-                                            </td>
-                                        </tr>
+                                                </span>
+                                            </div>
+                                        </div>
                                     );
                                 })}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Mobile Card View */}
-                    <div className="md:hidden divide-y divide-slate-100">
-                        {recentDocuments.map((doc) => {
-                            const status = statusConfig[doc.status as keyof typeof statusConfig];
-                            return (
-                                <div key={doc.id} className="p-4 hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-slate-900 truncate">{doc.name}</p>
-                                            <p className="text-xs text-slate-500 mt-0.5">{doc.vendor}</p>
-                                        </div>
-                                        <Badge variant={status.variant} className={`ml-2 ${status.className || ''}`}>
-                                            {status.label}
-                                        </Badge>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-3">
-                                        <span className="text-sm font-medium text-slate-900">
-                                            {doc.amount > 0 ? formatCurrency(doc.amount) : '-'}
-                                        </span>
-                                        <span className="text-xs text-slate-500">
-                                            {new Date(doc.date).toLocaleDateString('en-US', {
-                                                month: 'short',
-                                                day: 'numeric'
-                                            })}
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="py-12 flex flex-col items-center justify-center text-slate-500">
+                            <FileText className="h-12 w-12 text-slate-200 mb-4" />
+                            <p>No recent documents found</p>
+                            <Link href="/upload" className="mt-4">
+                                <Button variant="outline" size="sm">Upload your first document</Button>
+                            </Link>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>

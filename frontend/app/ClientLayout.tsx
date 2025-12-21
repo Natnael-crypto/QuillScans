@@ -15,7 +15,7 @@ export default function ClientLayout({
     // Determine if it's a public page (Landing, Login, etc.)
     // We consider root '/' as public landing page.
     // Add other public routes like '/login' or '/register' if needed.
-    const isPublicPage = pathname === '/' || pathname === '/auth';
+    const isPublicPage = pathname === '/' || pathname === '/auth' || pathname === '/auth/callback';
 
     // Determine current page name
     let currentPageName = "";

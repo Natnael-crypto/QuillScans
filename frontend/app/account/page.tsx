@@ -24,47 +24,57 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { useMe, useUpdateProfile } from '@/hooks/useMe';
+import countries from 'i18n-iso-countries';
 
-const countries = [
-    { value: 'us', label: 'United States' },
-    { value: 'uk', label: 'United Kingdom' },
-    { value: 'ca', label: 'Canada' },
-    { value: 'au', label: 'Australia' },
-    { value: 'de', label: 'Germany' },
-    { value: 'fr', label: 'France' },
-];
+import en from 'i18n-iso-countries/langs/en.json';
 
-const timezones = [
-    { value: 'America/New_York', label: 'Eastern Time (ET)' },
-    { value: 'America/Chicago', label: 'Central Time (CT)' },
-    { value: 'America/Denver', label: 'Mountain Time (MT)' },
-    { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
-    { value: 'Europe/London', label: 'GMT (London)' },
-    { value: 'Europe/Paris', label: 'CET (Paris)' },
-];
+countries.registerLocale(en);
 
 export default function Account() {
+
+    const { data: me } = useMe();
+    const { mutateAsync: updateProfile } = useUpdateProfile()
+
     const [profile, setProfile] = useState({
-        fullName: 'John Smith',
-        email: 'john@company.com',
-        company: 'Acme Corporation',
-        country: 'us',
-        timezone: 'America/New_York'
+        fullName: "",
+        email: "",
+        company: "",
+        country: "us",
     });
+
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    const countryMap = countries.getNames('en');
+    const countryList = Object.entries(countryMap).map(([code, name]) => ({ code, name }));
 
     const [isSaving, setIsSaving] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
+    // Adjust state during render to avoid cascading renders in useEffect
+    if (me?.profile && !isInitialized) {
+        setIsInitialized(true);
+        setProfile({
+            fullName: me.profile.full_name || "",
+            email: me.profile.email || "",
+            company: me.profile.company || "",
+            country: me.profile.country || "us",
+        });
+    }
+
+
+    const handleUpdateProfile = async () => {
+        setIsSaving(true);
+        await updateProfile(profile);
+        setIsSaving(false);
+    };
+
+
     const handleProfileChange = (field: string, value: string) => {
         setProfile(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSaveProfile = async () => {
-        setIsSaving(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setIsSaving(false);
-    };
 
     const handleChangePassword = () => {
         console.log('Change password');
@@ -134,45 +144,29 @@ export default function Account() {
                                 value={profile.country}
                                 onValueChange={(value) => handleProfileChange('country', value)}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className='w-full'>
                                     <SelectValue placeholder="Select country" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {countries.map((country) => (
-                                        <SelectItem key={country.value} value={country.value}>
-                                            {country.label}
+                                    {countryList.map((country) => (
+                                        <SelectItem key={country.code} value={country.code}>
+                                            {country.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="space-y-2">
-                            <Label>Timezone</Label>
-                            <Select
-                                value={profile.timezone}
-                                onValueChange={(value) => handleProfileChange('timezone', value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select timezone" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {timezones.map((timezone) => (
-                                        <SelectItem key={timezone.value} value={timezone.value}>
-                                            {timezone.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+
                     </div>
                 </CardContent>
                 <CardFooter className="flex justify-end">
                     <Button
-                        onClick={handleSaveProfile}
+                        onClick={handleUpdateProfile}
                         isLoading={isSaving}
+                        disabled={isSaving}
                     >
                         <Save className="h-4 w-4 mr-2" />
-                        Save Changes
+                        {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
                 </CardFooter>
             </Card>

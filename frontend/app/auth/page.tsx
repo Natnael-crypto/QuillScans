@@ -53,8 +53,11 @@ function AuthContent() {
 
             // Redirect to dashboard
             window.location.href = '/dashboard';
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.message || 'An error occurred');
+        } catch (err: unknown) {
+            const errorMessage = (err && typeof err === 'object' && 'response' in err)
+                ? (err.response as { data?: { message?: string } })?.data?.message
+                : (err instanceof Error ? err.message : 'An error occurred');
+            setError(errorMessage || 'An error occurred');
         } finally {
             setIsLoading(false);
         }

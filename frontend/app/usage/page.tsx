@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import {
     FileText,
     TrendingUp,
@@ -13,37 +15,55 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from "@/components/ui/skeleton";
 
-const dailyUsage = [
-    { name: 'Jan 1', value: 12 },
-    { name: 'Jan 2', value: 8 },
-    { name: 'Jan 3', value: 15 },
-    { name: 'Jan 4', value: 10 },
-    { name: 'Jan 5', value: 22 },
-    { name: 'Jan 6', value: 18 },
-    { name: 'Jan 7', value: 5 },
-    { name: 'Jan 8', value: 14 },
-    { name: 'Jan 9', value: 20 },
-    { name: 'Jan 10', value: 16 },
-    { name: 'Jan 11', value: 12 },
-    { name: 'Jan 12', value: 8 },
-    { name: 'Jan 13', value: 6 },
-    { name: 'Jan 14', value: 18 },
-    { name: 'Jan 15', value: 10 },
-];
-
-const usageByType = [
-    { type: 'Invoices', count: 65, percentage: 46 },
-    { type: 'Receipts', count: 48, percentage: 34 },
-    { type: 'Bank Statements', count: 18, percentage: 13 },
-    { type: 'Purchase Orders', count: 11, percentage: 7 },
-];
+interface UsageData {
+    dailyUsage: { name: string; value: number }[];
+    usageByType: { type: string; count: number; percentage: number }[];
+    quotaUsed: number;
+    quotaLimit: number;
+    remainingDays: number;
+    renewDate: string;
+}
 
 export default function Usage() {
-    const quotaUsed = 142;
-    const quotaLimit = 200;
-    const remainingDays = 16;
-    const renewDate = '2024-02-01';
+    const [data, setData] = useState<UsageData | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchUsage() {
+            try {
+                const res = await fetch('/api/usage');
+                if (res.ok) {
+                    const json = await res.json();
+                    setData(json);
+                }
+            } catch (error) {
+                console.error("Failed to fetch usage data:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchUsage();
+    }, []);
+
+    if (loading) {
+        return <div className="p-8 space-y-8">
+            <Skeleton className="h-12 w-48" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
+            </div>
+            <div className="grid lg:grid-cols-3 gap-6">
+                <Skeleton className="lg:col-span-2 h-[400px]" />
+                <Skeleton className="h-[400px]" />
+            </div>
+        </div>
+    }
+
+    if (!data) return null;
+
+    const { dailyUsage, usageByType, quotaUsed, quotaLimit, remainingDays, renewDate } = data;
+
 
     const percentageUsed = Math.round((quotaUsed / quotaLimit) * 100);
     const isLowQuota = quotaLimit - quotaUsed < 20;

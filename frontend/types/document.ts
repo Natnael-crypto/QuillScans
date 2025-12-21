@@ -75,4 +75,4 @@ export interface ExtractedData {
     [key: string]: unknown;
 }
 
-export type DocumentType = 'invoice' | 'purchase_order' | 'receipt' | 'bank_statement' | 'purchaseOrder' | 'bankStatement';
+export type DocumentType = 'invoice' | 'purchase_order' | 'receipt' | 'bank_statement' | 'purchaseOrder' | 'pos';

@@ -17,9 +17,11 @@ export async function setAuthCookies(
 ) {
     const cookieStore = await cookies();
 
+    console.log("Setting auth cookies:", { accessToken: !!accessToken, refreshToken: !!refreshToken, expiresIn });
+
     cookieStore.set(ACCESS_TOKEN, accessToken, {
         ...cookieOptions,
-        maxAge: expiresIn, // seconds
+        maxAge: expiresIn || 3600, // seconds
     });
 
     cookieStore.set(REFRESH_TOKEN, refreshToken, {

@@ -30,3 +30,9 @@ export type MeResponse = {
         updated_at: string;
     };
 };
+
+export type UpdateProfilePayload = {
+    full_name?: string;
+    company?: string;
+    country?: string;
+};

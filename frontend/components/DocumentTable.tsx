@@ -35,8 +35,15 @@ interface DocumentTableProps {
 const statusConfig = {
     processed: { label: 'Processed', variant: 'success' as const },
     processing: { label: 'Processing', variant: 'warning' as const },
-    failed: { label: 'Failed', variant: 'destructive' as const }, // 'error' is often 'destructive' in shadcn/ui
-    pending: { label: 'Pending', variant: 'outline' as const }, // 'default' mapped to outline or secondary often
+    failed: { label: 'Failed', variant: 'destructive' as const },
+    pending: { label: 'Pending', variant: 'outline' as const },
+
+    // Invoice handling
+    draft: { label: 'Draft', variant: 'secondary' as const },
+    open: { label: 'Open', variant: 'default' as const },
+    paid: { label: 'Paid', variant: 'success' as const },
+    void: { label: 'Void', variant: 'destructive' as const },
+    uncollectible: { label: 'Uncollectible', variant: 'destructive' as const },
 };
 
 const SortIcon = ({
@@ -101,6 +108,9 @@ export default function DocumentTable({
     };
 
     const getDetailUrl = (doc: AnyDocument) => {
+        if (type === 'purchase_order') {
+            type = "pos";
+        };
         return `/document?type=${type}&id=${doc.id}`;
     };
 

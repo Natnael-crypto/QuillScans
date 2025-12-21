@@ -37,7 +37,7 @@ const navigation: NavigationItem[] = [
         children: [
             { name: 'Invoices', href: 'Invoices', icon: Receipt },
             { name: 'Receipts', href: 'Receipts', icon: Receipt },
-            { name: 'Bank Statements', href: 'Bank', icon: Building2 },
+            // { name: 'Bank Statements', href: 'Bank', icon: Building2 },
             { name: 'Purchase Orders', href: 'pos', icon: ShoppingCart },
         ]
     },
@@ -66,6 +66,8 @@ export default function Sidebar({ currentPage, isCollapsed = false, onToggleColl
                 : [...prev, name]
         );
     };
+
+    
 
     const NavItem = ({ item, isChild = false }: { item: NavigationItem; isChild?: boolean }) => {
         const isActive = currentPage === item.href;

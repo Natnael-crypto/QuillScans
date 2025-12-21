@@ -1,163 +1,73 @@
-
-import os
 import json
-import time
-import requests
-import re
+import signal
+from kafka_consumer import create_consumer
+from config import KAFKA_TOPIC
+from router import route
+from services.supabase import (
+    update_document_status,
+    get_document_files,
+)
 
+running = True
 
-API_URL = "https://router.huggingface.co/v1/chat/completions"
-headers = {
-    "Authorization": "Bearer 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",
-}
+def shutdown(sig, frame):
+    global running
+    running = False
 
-def extract_json_from_content(content):
-    """
-    Extract JSON from markdown code blocks or raw JSON.
-    Removes ```json and ``` automatically.
-    """
-    if not isinstance(content, str):
-        raise ValueError("Expected string content from model")
+signal.signal(signal.SIGINT, shutdown)
+signal.signal(signal.SIGTERM, shutdown)
 
-    # Remove the ```json or ``` wrapper
-    cleaned = re.sub(r"^```json|^```|```$", "", content, flags=re.MULTILINE).strip()
+consumer = create_consumer()
+consumer.subscribe([KAFKA_TOPIC])
 
-    return cleaned
+print("🚀 Document processor started...")
 
-def query(payload):
-    """Send request to HuggingFace Router endpoint."""
+while running:
+    msg = consumer.poll(1.0)
+
+    if msg is None:
+        continue
+
+    if msg.error():
+        print("Kafka error:", msg.error())
+        continue
+
+    document_id = None
+
     try:
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        raise SystemExit(f"Request failed: {e}")
+        payload = json.loads(msg.value().decode())
+        document_id = payload["document_id"]
+        document_type = payload["document_type"]
 
-def save_json_to_file(json_text, file_path="result-real-estate.json"):
-    """Safely save the extracted JSON to file."""
-    try:
-        # The model returns JSON *as text*, so we parse and rewrite it cleanly
-        parsed = json.loads(json_text)
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(parsed, f, indent=4, ensure_ascii=False)
-        print(f"JSON result saved to {file_path}")
-    except json.JSONDecodeError:
-        raise ValueError("Model response did not contain valid JSON.")
+        # 1️⃣ Mark processing
+        update_document_status(document_id, "processing")
 
-def main():
-    payload = {
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": """
-You are an advanced financial‑document extraction AI. You will receive an image or PDF page containing an invoice or receipt. Your task is to extract **all relevant information** and return a **strictly valid JSON object** with no additional text or explanations.
+        # 2️⃣ Fetch signed file URLs
+        files = get_document_files(document_id)
 
-### OUTPUT RULES
+        # 3️⃣ Route processing by document type
+        result = route(
+            document_type=document_type,
+            payload={
+                **payload,
+                "files": files,  # signed URLs
+            },
+        )
 
-1. Output **only JSON** — no markdown, no comments, no text before or after the JSON.
-2. If a field does not exist in the document, return it as **null**.
-3. All numbers must be plain numbers with no currency symbols.
-4. All dates must be in **YYYY-MM-DD** format.
-5. Line items must be a clean array with one object per listed item.
-6. Include **all mandatory and optional invoice fields**.
-7. Identify the currency from the document and if it doesn't exist return it as **null**.
+        # 4️⃣ Mark processed
+        update_document_status(document_id, "processed")
 
-### JSON STRUCTURE TO RETURN
+        consumer.commit(msg)
 
-{
-"invoice_number": null,
-"invoice_date": null,
-"due_date": null,
-"po_number": null,
-"currency": null,
+    except Exception as e:
+        print("❌ Processing failed:", e)
 
-"vendor": {
-"name": null,
-"address": null,
-"email": null,
-"phone": null,
-"tax_id": null,
-"registration_number": null,
-"website": null
-},
+        if document_id:
+            try:
+                update_document_status(document_id, "failed")
+            except Exception as inner:
+                print("❌ Failed to update status:", inner)
 
-"customer": {
-"name": null,
-"address": null,
-"email": null,
-"phone": null,
-"tax_id": null
-},
+        consumer.commit(msg)  # avoid poison-message loops
 
-"line_items": [
-{
-"description": null,
-"quantity": null,
-"unit_price": null,
-"total_price": null,
-"sku": null
-}
-],
-
-"summary": {
-"subtotal": null,
-"discount": null,
-"tax_amount": null,
-"tax_rate": null,
-"shipping_fee": null,
-"other_fees": null,
-"total": null,
-"currency": null
-},
-
-"payment_details": {
-"payment_method": null,
-"paid_status": null,
-"paid_date": null,
-"bank_account": null,
-"iban": null,
-"swift": null,
-"payment_reference": null
-},
-
-"additional_info": {
-"terms": null,
-"notes": null,
-"barcode_data": null,
-"qr_data": null,
-"page_number": null
-}
-}
-
-Now analyze the provided invoice document and return the JSON exactly in this structure.
-                    """
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": "https://www.getjobber.com/wp-content/uploads/2024/04/receipt-template-handyman.webp"
-                        }
-                    }
-                ]
-            }
-        ],
-        "model": "google/gemma-3-27b-it:nebius"
-    }
-
-    start_time = time.time()
-    response = query(payload)
-    end_time = time.time()
-
-    raw_content = response["choices"][0]["message"]["content"]
-
-    clean_json = extract_json_from_content(raw_content)
-
-    save_json_to_file(clean_json)
-
-    print(f"⏱️ Time taken: {end_time - start_time:.2f} seconds")
-
-if __name__ == "__main__":
-    main()
+consumer.close()

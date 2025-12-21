@@ -115,17 +115,7 @@ export default function Navbar({ currentPage }: NavbarProps) {
                     </div>
 
                     {/* Search */}
-                    <div className="relative hidden md:block">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Search documents..."
-                            className="w-80 h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
-                        />
-                        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex h-5 items-center gap-1 rounded border border-slate-200 bg-white px-1.5 font-mono text-[10px] font-medium text-slate-400">
-                            ⌘K
-                        </kbd>
-                    </div>
+
                 </div>
 
                 {/* Right side */}
@@ -203,10 +193,10 @@ export default function Navbar({ currentPage }: NavbarProps) {
                             className="flex items-center gap-2 p-1.5 pr-3 hover:bg-slate-100 rounded-xl transition-colors"
                         >
                             <div className="h-8 w-8 bg-gradient-to-br from-[#635BFF] to-[#635BFF] rounded-lg flex items-center justify-center text-white text-sm font-semibold">
-                                {('full_name' in (user || {}) ? (user as any).full_name?.charAt(0) : user?.email?.charAt(0)) || 'U'}
+                                {((user as { full_name?: string })?.full_name?.charAt(0) || user?.email?.charAt(0)) || 'U'}
                             </div>
                             <span className="hidden md:block text-sm font-medium text-slate-700">
-                                {('full_name' in (user || {}) ? (user as any).full_name : null) || 'User'}
+                                {(user as { full_name?: string })?.full_name || 'User'}
                             </span>
                             <ChevronDown className="h-4 w-4 text-slate-400" />
                         </button>
@@ -216,7 +206,7 @@ export default function Navbar({ currentPage }: NavbarProps) {
                                 <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
                                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden z-20">
                                     <div className="px-4 py-3 border-b border-slate-100">
-                                        <p className="text-sm font-medium text-slate-900">{('full_name' in (user || {}) ? (user as any).full_name : null) || 'User'}</p>
+                                        <p className="text-sm font-medium text-slate-900">{(user as { full_name?: string })?.full_name || 'User'}</p>
                                         <p className="text-sm text-slate-500">{user?.email || 'user@example.com'}</p>
                                     </div>
                                     <div className="py-2">

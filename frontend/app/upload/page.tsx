@@ -20,20 +20,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useUploadDocuments } from '@/hooks/useUploadDocuments';
 
 interface UploadedFile {
-    id: string;
     file: File;
 }
 
 const documentTypes = [
     { value: 'invoice', label: 'Invoice', icon: FileText, description: 'Sales invoices, bills' },
     { value: 'receipt', label: 'Receipt', icon: Receipt, description: 'Expense receipts' },
-    { value: 'bank_statement', label: 'Bank Statement', icon: Building2, description: 'Monthly statements' },
     { value: 'purchase_order', label: 'Purchase Order', icon: ShoppingCart, description: 'PO documents' },
 ];
 
 export default function Upload() {
+    const { mutateAsync: uploadDocuments } = useUploadDocuments();
     const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
     const [documentType, setDocumentType] = useState('');
     const [metadata, setMetadata] = useState({
@@ -63,15 +63,13 @@ export default function Upload() {
 
         setIsUploading(true);
 
-        // Simulate upload progress
-        for (const file of selectedFiles) {
-            for (let progress = 0; progress <= 100; progress += 20) {
-                await new Promise(resolve => setTimeout(resolve, 200));
-                setUploadProgress(prev => ({
-                    ...prev,
-                    [file.id]: progress
-                }));
-            }
+        try {
+            await uploadDocuments({
+                documentType,
+                files: selectedFiles.map(file => file.file),
+            });
+        } catch (error) {
+            console.error('Upload failed:', error);
         }
 
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -245,15 +243,15 @@ export default function Upload() {
                                     <p className="text-sm font-medium text-slate-700 mb-3">Uploading...</p>
                                     <div className="space-y-2">
                                         {selectedFiles.map((file) => (
-                                            <div key={file.id} className="space-y-1">
+                                            <div key={file.file.name} className="space-y-1">
                                                 <div className="flex items-center justify-between text-xs">
                                                     <span className="text-slate-600 truncate">{file.file.name}</span>
-                                                    <span className="text-slate-500">{uploadProgress[file.id] || 0}%</span>
+                                                    <span className="text-slate-500">{uploadProgress[file.file.name] || 0}%</span>
                                                 </div>
                                                 <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                                     <div
                                                         className="h-full bg-accent rounded-full transition-all duration-300"
-                                                        style={{ width: `${uploadProgress[file.id] || 0}%` }}
+                                                        style={{ width: `${uploadProgress[file.file.name] || 0}%` }}
                                                     />
                                                 </div>
                                             </div>

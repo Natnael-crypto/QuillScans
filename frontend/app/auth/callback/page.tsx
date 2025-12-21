@@ -30,10 +30,13 @@ export default function AuthCallback() {
                         }),
                     });
 
+                    console.log("Response:", res);
+
                     if (!res.ok) {
                         throw new Error("Failed to set session on server");
                     }
 
+                    router.refresh(); // Ensure cookies are seen by server components
                     router.push("/dashboard");
                 } else {
                     // No session found, redirect to auth page
@@ -58,15 +61,17 @@ export default function AuthCallback() {
                                     throw new Error("Failed to set session on server");
                                 }
 
+                                router.refresh();
                                 router.push("/dashboard");
                             }
                         });
                     }, 1000)
                 }
-            } catch (err: any) {
-                console.error("Auth callback error:", err);
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : String(err);
+                console.error("Auth callback error:", message);
                 setMessage("Authentication failed. Redirecting...");
-                setTimeout(() => router.push("/auth?error=oauth"), 2000);
+                setTimeout(() => router.push("/auth?model=login"), 2000);
             }
         };
 
