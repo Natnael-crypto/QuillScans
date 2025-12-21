@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://quillscans.vercel.app/sitemap.xml

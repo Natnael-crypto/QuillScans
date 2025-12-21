@@ -51,11 +51,13 @@ export default function Hero() {
                             <span className="text-white/80 text-sm">2,000+ reviews</span>
                         </div>
 
-                        <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight mb-6">
+                        <h2 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-tight mb-6">
                             Time is money.
                             <br />
                             <span className="text-accent">Save both.</span>
-                        </h1>
+                        </h2>
+
+                        <h1 className="text-[1px] text-primary/0 select-none absolute">AI Invoice & Document Scanner</h1>
 
                         <p className="text-xl text-white/70 mb-8 max-w-lg">
                             Easy-to-use document automation, data extraction, and accounting workflows. All in one place.
