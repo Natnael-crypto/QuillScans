@@ -262,6 +262,7 @@ function DocumentDetailContent() {
                 ...documentData,
                 invoiceNumber: documentData.invoiceNumber,
                 date: String(documentData.issuedAt),
+                dueDate: documentData.dueDate ? String(documentData.dueDate) : undefined,
                 total: documentData.totals?.grandTotal,
                 currency: documentData.totals?.currency,
                 lineItems: documentData.items.map(item => ({ ...item, total: item.amount })),
@@ -353,9 +354,7 @@ function DocumentDetailContent() {
                     <ExtractedDataPanel
                         data={extractedData}
                         documentType={type}
-                        onSave={handleSave}
                         onRegenerate={handleRegenerate}
-                        isSaving={false}
                         isLoading={false}
                     />
 
@@ -395,7 +394,8 @@ function DocumentDetailContent() {
                                         </p>
                                         {formatAddress(
                                             'recipient' in documentData ? documentData.recipient.address :
-                                                documentData.customer?.address
+                                                ('receiptNumber' in documentData && 'customer' in documentData && documentData.customer) ? (documentData as Receipt).customer.address :
+                                                    undefined
                                         )}
                                     </div>
                                 </div>
