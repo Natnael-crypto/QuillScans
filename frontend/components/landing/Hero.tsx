@@ -2,9 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Star, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Star, CheckCircle2, FileText, Receipt, Clock, Upload, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
 
 const stats = [
     { label: 'Documents Processed', value: '2M+' },
@@ -17,6 +18,15 @@ const trustedBy = [
 ];
 
 export default function Hero() {
+    const [view, setView] = useState<'dashboard' | 'upload'>('dashboard');
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setView(prev => prev === 'dashboard' ? 'upload' : 'dashboard');
+        }, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <section className="relative pt-32 pb-20 overflow-hidden">
             {/* Background Gradient */}
@@ -85,59 +95,211 @@ export default function Hero() {
                         transition={{ duration: 0.8, delay: 0.2 }}
                         className="relative hidden lg:block"
                     >
-                        <div className="relative">
-                            {/* Main Dashboard Card */}
-                            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden transform rotate-1 hover:rotate-0 transition-transform duration-500">
-                                <div className="h-8 bg-slate-100 flex items-center gap-2 px-4">
-                                    <div className="w-3 h-3 rounded-full bg-red-400" />
-                                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                                    <div className="w-3 h-3 rounded-full bg-green-400" />
-                                </div>
-                                <div className="p-6">
-                                    <div className="h-8 bg-slate-200 rounded-lg w-32 mb-4" />
-                                    <div className="grid grid-cols-3 gap-4 mb-6">
-                                        {[...Array(3)].map((_, i) => (
-                                            <div key={i} className="h-20 bg-slate-100 rounded-xl" />
-                                        ))}
+                        <div className="relative group">
+                            {/* Browser Mockup Decorative Elements */}
+                            <div className="absolute -inset-1 bg-gradient-to-r from-accent/20 to-primary/20 rounded-[2rem] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
+
+                            {/* Main Browser Window */}
+                            <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden border border-white/20 backdrop-blur-sm">
+                                {/* Browser Header */}
+                                <div className="h-10 bg-slate-50 border-b border-slate-100 flex items-center justify-between px-4">
+                                    <div className="flex gap-1.5">
+                                        <div className="w-3 h-3 rounded-full bg-red-400/80" />
+                                        <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
+                                        <div className="w-3 h-3 rounded-full bg-green-400/80" />
                                     </div>
-                                    <div className="h-32 bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl" />
+                                    <div className="flex gap-4">
+                                        <div className="h-4 w-24 bg-slate-200 rounded-full animate-pulse" />
+                                        <div className="h-4 w-4 bg-slate-200 rounded-full" />
+                                    </div>
+                                </div>
+
+                                {/* Content Area - Cycles between views */}
+                                <div className="p-6 h-[480px] overflow-hidden relative">
+                                    <AnimatePresence mode="wait">
+                                        {view === 'dashboard' ? (
+                                            /* Dashboard View Mockup */
+                                            <motion.div
+                                                key="dashboard"
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -20 }}
+                                                transition={{ duration: 0.5 }}
+                                                className="space-y-6"
+                                            >
+                                                <div className="flex justify-between items-center mb-8">
+                                                    <div className="space-y-1">
+                                                        <div className="h-6 w-32 bg-slate-900/10 rounded-md" />
+                                                        <div className="h-4 w-48 bg-slate-400/10 rounded-md" />
+                                                    </div>
+                                                    <div className="h-10 w-32 bg-primary rounded-lg shadow-lg shadow-primary/20" />
+                                                </div>
+
+                                                {/* Mini Stats */}
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="p-4 bg-blue-50/50 border border-blue-100/50 rounded-xl space-y-2">
+                                                        <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                            <FileText className="h-4 w-4 text-blue-600" />
+                                                        </div>
+                                                        <div className="h-4 w-20 bg-blue-200/50 rounded" />
+                                                        <div className="h-6 w-12 bg-blue-900/20 rounded" />
+                                                    </div>
+                                                    <div className="p-4 bg-purple-50/50 border border-purple-100/50 rounded-xl space-y-2">
+                                                        <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                                            <Clock className="h-4 w-4 text-purple-600" />
+                                                        </div>
+                                                        <div className="h-4 w-20 bg-purple-200/50 rounded" />
+                                                        <div className="h-6 w-12 bg-purple-900/20 rounded" />
+                                                    </div>
+                                                </div>
+
+                                                {/* Chart Mockup */}
+                                                <div className="p-4 bg-white border border-slate-100 rounded-xl space-y-4">
+                                                    <div className="h-4 w-32 bg-slate-200 rounded" />
+                                                    <div className="flex items-end gap-2 h-24 pt-4">
+                                                        {[40, 70, 45, 90, 65, 80, 55, 75].map((h, i) => (
+                                                            <motion.div
+                                                                key={i}
+                                                                initial={{ height: 0 }}
+                                                                animate={{ height: `${h}%` }}
+                                                                transition={{ delay: 0.5 + (i * 0.1), duration: 0.8 }}
+                                                                className="flex-1 bg-accent/20 rounded-t-sm relative group overflow-hidden"
+                                                            >
+                                                                <div className="absolute inset-0 bg-accent translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                                            </motion.div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Table Mockup */}
+                                                <div className="space-y-3">
+                                                    {[1, 2].map((i) => (
+                                                        <div key={i} className="flex items-center justify-between p-3 bg-slate-50/50 rounded-lg border border-slate-100">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="h-8 w-8 bg-white rounded border border-slate-100 flex items-center justify-center">
+                                                                    <Receipt className="h-4 w-4 text-slate-400" />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <div className="h-3 w-24 bg-slate-300 rounded" />
+                                                                    <div className="h-2 w-16 bg-slate-200 rounded" />
+                                                                </div>
+                                                            </div>
+                                                            <div className="h-5 w-16 bg-emerald-100 text-emerald-700 rounded-full text-[10px] flex items-center justify-center font-medium">
+                                                                Processed
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        ) : (
+                                            /* Upload View Mockup */
+                                            <motion.div
+                                                key="upload"
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -20 }}
+                                                transition={{ duration: 0.5 }}
+                                                className="space-y-6"
+                                            >
+                                                <div className="space-y-1 mb-8">
+                                                    <div className="h-6 w-40 bg-slate-900/10 rounded-md" />
+                                                    <div className="h-4 w-64 bg-slate-400/10 rounded-md" />
+                                                </div>
+
+                                                {/* Upload Dropzone Mockup */}
+                                                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-50/50 space-y-4">
+                                                    <div className="h-16 w-16 bg-white rounded-full shadow-sm flex items-center justify-center">
+                                                        <Upload className="h-8 w-8 text-primary" />
+                                                    </div>
+                                                    <div className="space-y-2 text-center">
+                                                        <div className="h-4 w-32 bg-slate-300 rounded mx-auto" />
+                                                        <div className="h-3 w-48 bg-slate-200 rounded mx-auto" />
+                                                    </div>
+                                                </div>
+
+                                                {/* Document Type Selector Mockup */}
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    {[FileText, Receipt, Plus].map((Icon, i) => (
+                                                        <div key={i} className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 ${i === 0 ? 'border-primary bg-primary/5' : 'border-slate-100 bg-white'}`}>
+                                                            <Icon className={`h-6 w-6 ${i === 0 ? 'text-primary' : 'text-slate-400'}`} />
+                                                            <div className={`h-2 w-12 rounded ${i === 0 ? 'bg-primary/30' : 'bg-slate-200'}`} />
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Progress Bar Mockup */}
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between">
+                                                        <div className="h-3 w-20 bg-slate-300 rounded" />
+                                                        <div className="h-3 w-8 bg-slate-300 rounded" />
+                                                    </div>
+                                                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: "75%" }}
+                                                            transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                                                            className="h-full bg-primary"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             </div>
 
-                            {/* Floating Stats Card */}
+                            {/* Floating Elements for extra "wow" factor */}
                             <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.6 }}
-                                className="absolute -left-8 top-20 bg-white rounded-xl shadow-lg p-4 transform -rotate-3"
+                                animate={{
+                                    y: [0, -10, 0],
+                                    rotate: [-3, -1, -3]
+                                }}
+                                transition={{
+                                    duration: 4,
+                                    repeat: Infinity,
+                                    ease: "easeInOut"
+                                }}
+                                className="absolute -left-12 top-1/4 bg-white/80 backdrop-blur-xl p-4 rounded-2xl shadow-xl border border-white/20 hidden xl:block"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                                    <div className="h-10 w-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+                                        <CheckCircle2 className="h-6 w-6 text-white" />
                                     </div>
                                     <div>
-                                        <p className="text-xs text-slate-500">Documents Today</p>
-                                        <p className="text-lg font-bold text-slate-900">127</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">Auto-Extracted</p>
+                                        <p className="text-sm font-bold text-slate-900">$2,450.00</p>
                                     </div>
                                 </div>
                             </motion.div>
 
-                            {/* Floating Chart Card */}
                             <motion.div
-                                initial={{ opacity: 0, y: -20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.8 }}
-                                className="absolute -right-4 bottom-10 bg-white rounded-xl shadow-lg p-4 transform rotate-2"
+                                animate={{
+                                    y: [0, 10, 0],
+                                    rotate: [2, 4, 2]
+                                }}
+                                transition={{
+                                    duration: 5,
+                                    repeat: Infinity,
+                                    ease: "easeInOut",
+                                    delay: 1
+                                }}
+                                className="absolute -right-8 bottom-20 bg-white/80 backdrop-blur-xl p-4 rounded-2xl shadow-xl border border-white/20 hidden xl:block"
                             >
-                                <div className="text-xs text-slate-500 mb-2">Monthly Trend</div>
-                                <div className="flex items-end gap-1 h-12">
-                                    {[40, 60, 45, 80, 65, 90, 75].map((h, i) => (
-                                        <div
-                                            key={i}
-                                            className="w-3 bg-accent rounded-t"
-                                            style={{ height: `${h}%` }}
-                                        />
-                                    ))}
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-accent" />
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Live Processing</p>
+                                    </div>
+                                    <div className="flex items-end gap-1 h-8">
+                                        {[30, 60, 45, 80, 50].map((h, i) => (
+                                            <motion.div
+                                                key={i}
+                                                animate={{ height: [`${h}%`, `${h + 20}%`, `${h}%`] }}
+                                                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                                                className="w-1.5 bg-accent rounded-full"
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
                             </motion.div>
                         </div>
