@@ -26,7 +26,7 @@ export interface Invoice {
 
     // Metadata for Integrations
     externalId?: string;      // ID from Stripe/QuickBooks
-    metadata?: Record<string, string | number | boolean>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface ContactInfo {

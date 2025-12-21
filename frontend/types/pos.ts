@@ -38,7 +38,7 @@ export interface POSTransaction {
 
     // Status
     status: POSStatus;
-    metadata?: Record<string, string | number | boolean>;
+    metadata?: Record<string, unknown>;
 
     // Timestamps
     createdAt: Date | string;
