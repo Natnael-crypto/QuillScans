@@ -56,6 +56,7 @@ export interface POSItem {
     taxRate: number;
     amount: number;
     createdAt: Date | string;
+    [key: string]: unknown;
 }
 
 export interface POSTaxLine {

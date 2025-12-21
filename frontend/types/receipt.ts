@@ -50,6 +50,7 @@ export interface ReceiptItem {
     taxRate: number;
     amount: number;
     createdAt: Date | string;
+    [key: string]: unknown;
 }
 
 export interface ReceiptPayment {

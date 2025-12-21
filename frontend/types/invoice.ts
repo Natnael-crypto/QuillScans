@@ -59,6 +59,7 @@ export interface InvoiceItem {
     discount?: number;
     taxRate?: number; // Represented as a percentage (e.g., 15 for 15%)
     amount: number;   // quantity * unitPrice - discount
+    [key: string]: unknown;
 }
 
 export interface InvoiceTotals {

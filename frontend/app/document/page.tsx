@@ -264,7 +264,7 @@ function DocumentDetailContent() {
                 date: String(documentData.issuedAt),
                 total: documentData.totals?.grandTotal,
                 currency: documentData.totals?.currency,
-                lineItems: documentData.items,
+                lineItems: documentData.items.map(item => ({ ...item, total: item.amount })),
                 vendor: documentData.sender.name,
                 customer: documentData.recipient.name
             };
@@ -275,7 +275,7 @@ function DocumentDetailContent() {
                 date: String(documentData.transactionDate),
                 total: documentData.grandTotal,
                 currency: documentData.currency,
-                lineItems: documentData.items,
+                lineItems: documentData.items.map(item => ({ ...item, total: item.amount })),
                 vendor: documentData.merchant.name,
                 customer: documentData.customer.name
             };
@@ -285,7 +285,7 @@ function DocumentDetailContent() {
                 date: String(documentData.timestamp),
                 total: documentData.grandTotal,
                 currency: documentData.currency,
-                lineItems: documentData.items,
+                lineItems: documentData.items.map(item => ({ ...item, total: item.amount })),
                 vendor: documentData.storeId,
                 customer: documentData.customer?.name
             };
