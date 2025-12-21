@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserAndSupabase } from '@/lib/supabaseServer';
-import { Receipt, ReceiptItem, ReceiptStatus, ContactInfo, Address, ReceiptPayment } from '@/types/receipt';
+import { Receipt, ReceiptItem, ReceiptStatus, ContactInfo, Address, ReceiptPayment, PaymentMethod } from '@/types/receipt';
 import { DbReceipt, DbReceiptItem, DbInvoiceContact, DbInvoiceAddress, DbReceiptPayment } from '@/types/supabase';
 import { getAuthCookies } from '@/lib/auth/cookies';
 
